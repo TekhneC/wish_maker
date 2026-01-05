@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>新年寄语 · Toward 2026</title>
+  <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+<body>
+  <div class="sky">
+    <div class="sky-overlay"></div>
+    <div class="firework-title" aria-hidden="true">TOWARDS 2026</div>
+    <div class="stars" aria-hidden="true"></div>
+    <div class="message-layer" id="messageLayer" aria-live="polite"></div>
+    <div class="meteor-layer" id="meteorLayer" aria-hidden="true"></div>
+  </div>
+
+  <footer class="input-dock">
+    <div class="input-shell">
+      <input
+        id="wishInput"
+        type="text"
+        placeholder="写下你的新年寄语"
+        maxlength="80"
+        autocomplete="off"
+      />
+      <button id="sendButton" class="send-button" type="button" aria-label="发送寄语">
+        <span class="send-press"></span>
+        <svg class="plane" viewBox="0 0 64 64" aria-hidden="true">
+          <path d="M7 30.5L56.5 7.2c1.7-.8 3.5.9 2.7 2.6L41.3 57.6c-.7 1.4-2.7 1.5-3.6.1L27 38 7.4 33.2c-2-.5-2.2-3.2-.4-4.1z" />
+        </svg>
+      </button>
+    </div>
+  </footer>
+
+  <script src="/static/js/app.js"></script>
+</body>
+</html>
