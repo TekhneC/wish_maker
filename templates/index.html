@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新年活动签到</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+  <main class="sky">
+    <div class="gradient"></div>
+    <div class="stars" aria-hidden="true"></div>
+    <div class="firework-text" aria-hidden="true">
+      <span>TOWARDS 2026</span>
+    </div>
+    <div class="meteor" aria-hidden="true"></div>
+    <section class="wishes" id="wish-layer" aria-live="polite"></section>
+
+    <div class="input-bar">
+      <input
+        id="wish-input"
+        type="text"
+        maxlength="{{ max_length }}"
+        placeholder="写下新年寄语..."
+        autocomplete="off"
+      />
+      <button id="send-button" class="send-button" aria-label="发送">
+        <span class="plane"></span>
+        <span class="trail"></span>
+      </button>
+    </div>
+  </main>
+  <script src="/static/js/main.js"></script>
+</body>
+</html>
