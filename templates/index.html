@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>新年寄语夜空</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  </head>
+  <body>
+    <div class="scene">
+      <canvas id="fireworks-text" aria-hidden="true"></canvas>
+      <div id="star-layer" aria-hidden="true"></div>
+      <div id="meteor-layer" aria-hidden="true"></div>
+      <main class="wish-sky" id="wish-sky" aria-live="polite"></main>
+      <section class="input-panel">
+        <div class="input-shell">
+          <input
+            id="wish-input"
+            type="text"
+            placeholder="写下你的新年寄语..."
+            maxlength="{{ max_length }}"
+            autocomplete="off"
+          />
+          <button id="send-btn" aria-label="发送寄语" type="button">
+            <span class="plane-body"></span>
+          </button>
+        </div>
+        <div class="input-meta">
+          <span id="hint-text">按 Enter 发送</span>
+          <span id="count-text">0 / {{ max_length }}</span>
+        </div>
+      </section>
+    </div>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+  </body>
+</html>

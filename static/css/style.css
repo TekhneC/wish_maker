@@ -1,0 +1,252 @@
+:root {
+  color-scheme: only light;
+  --sky-top: #040a2b;
+  --sky-bottom: #0b1a45;
+  --accent: #ffd46b;
+  --accent-strong: #ffcc4d;
+  --white: #ffffff;
+  --glass: rgba(255, 255, 255, 0.12);
+  --wish-shadow: rgba(255, 215, 120, 0.35);
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  min-height: 100vh;
+  background: radial-gradient(circle at 20% 20%, #15245a 0%, var(--sky-top) 40%, var(--sky-bottom) 100%);
+  font-family: "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  color: var(--white);
+  overflow: hidden;
+}
+
+.scene {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+}
+
+#fireworks-text {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0.45;
+  pointer-events: none;
+}
+
+#star-layer,
+#meteor-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.wish-sky {
+  position: absolute;
+  inset: 0;
+  padding: 72px 48px 160px;
+}
+
+.wish {
+  position: absolute;
+  max-width: 280px;
+  padding: 8px 14px;
+  color: #fff7de;
+  font-size: 16px;
+  line-height: 1.4;
+  background: rgba(10, 17, 44, 0.65);
+  border: 1px solid rgba(255, 214, 120, 0.2);
+  border-radius: 16px;
+  box-shadow: 0 8px 20px rgba(4, 7, 24, 0.45), 0 0 12px var(--wish-shadow);
+  backdrop-filter: blur(4px);
+  transform: translateY(12px) scale(0.98);
+  opacity: 0;
+  transition: opacity 0.8s ease, transform 0.9s ease;
+}
+
+.wish.visible {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+}
+
+.wish.floating {
+  animation: floaty 6s ease-in-out infinite;
+}
+
+@keyframes floaty {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+.input-panel {
+  position: absolute;
+  left: 50%;
+  bottom: 32px;
+  transform: translateX(-50%);
+  width: min(720px, 92vw);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.input-shell {
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 999px;
+  padding: 10px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  box-shadow: 0 12px 24px rgba(8, 11, 30, 0.35);
+}
+
+#wish-input {
+  flex: 1;
+  border: none;
+  background: transparent;
+  font-size: 16px;
+  color: #1c2342;
+  outline: none;
+}
+
+#send-btn {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  background: var(--accent);
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  box-shadow: 0 8px 16px rgba(255, 215, 120, 0.4);
+  transition: transform 0.15s ease, filter 0.15s ease;
+  position: relative;
+  overflow: visible;
+}
+
+#send-btn:active {
+  transform: scale(0.94);
+  filter: brightness(0.95);
+}
+
+.plane-body {
+  width: 22px;
+  height: 22px;
+  border-radius: 3px;
+  border-left: 11px solid transparent;
+  border-right: 11px solid transparent;
+  border-bottom: 18px solid #6b4b00;
+  transform: rotate(45deg);
+}
+
+.input-meta {
+  display: flex;
+  justify-content: space-between;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 12px;
+  padding: 0 8px;
+}
+
+.star {
+  position: absolute;
+  border-radius: 50%;
+  background: #fff6d1;
+  opacity: 0.6;
+  animation: twinkle 4s linear infinite;
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.9;
+  }
+}
+
+.meteor {
+  position: absolute;
+  width: 160px;
+  height: 2px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0));
+  filter: blur(0.2px);
+  transform: rotate(-20deg);
+  animation: meteor 1.2s ease-out forwards;
+}
+
+@keyframes meteor {
+  0% {
+    opacity: 0;
+    transform: translate(-40px, -40px) rotate(-20deg);
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(220px, 120px) rotate(-20deg);
+  }
+}
+
+.flying-plane {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-left: 12px solid transparent;
+  border-right: 12px solid transparent;
+  border-bottom: 20px solid var(--accent-strong);
+  transform: rotate(45deg);
+  animation: plane-flight 0.5s ease-out forwards;
+  z-index: 4;
+}
+
+@keyframes plane-flight {
+  0% {
+    transform: translate(0, 0) rotate(45deg) scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: translate(160px, -120px) rotate(45deg) scale(0.8);
+    opacity: 0;
+  }
+}
+
+.plane-spark {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: rgba(255, 214, 120, 0.9);
+  animation: spark 0.6s ease-out forwards;
+}
+
+@keyframes spark {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-30px, 16px) scale(0.2);
+  }
+}
+
+@media (max-width: 768px) {
+  .wish {
+    max-width: 220px;
+    font-size: 14px;
+  }
+
+  .wish-sky {
+    padding: 64px 24px 140px;
+  }
+}
