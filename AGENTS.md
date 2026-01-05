@@ -22,8 +22,8 @@
 
 ```bash
 # 1) 创建 conda 环境（示例名）
-conda create -n wish_maker python=3.10 -y
-conda activate wish_maker
+conda create -n wish-maker python=3.10 -y
+conda activate wish-maker
 
 # 2) 安装依赖
 python -m pip install -U pip
@@ -201,6 +201,7 @@ ssh -L 8080:127.0.0.1:8000 <server>
 
 ### 8.2 依赖管理与环境约束
 
+* 任何运行命令前，必须先完成依赖安装并用 import 验证/
 * 任何新增 Python 依赖，必须同步更新 `requirements.txt`，且不要在代码里假设依赖“默认已安装”。
 * 环境以 conda 为准，优先使用纯 Python 依赖；不新增系统层依赖（需要 apt 的一律不做自动化安装）。
 * 不要在代码中假设服务器存在 GUI；所有调试输出应基于日志/终端可读信息（避免依赖本地桌面环境）。

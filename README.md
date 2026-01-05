@@ -11,7 +11,7 @@
 ```bash
 conda create -n wish-maker python=3.10
 conda activate wish-maker
-pip install flask==3.0.3
+pip install -r requirements.txt
 ```
 
 ## 数据库
