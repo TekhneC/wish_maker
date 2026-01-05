@@ -1,15 +1,19 @@
 :root {
   color-scheme: dark;
-  --night-deep: #0a1232;
-  --night-mid: #182e6a;
-  --night-glow: #2a6db1;
-  --highlight: #ffd45a;
-  --input-bg: #ffffff;
-  --input-shadow: rgba(255, 255, 255, 0.35);
-  --wish-glow: rgba(120, 188, 255, 0.6);
-  --twinkle-soft: rgba(255, 255, 255, 0.75);
-  --twinkle-warm: rgba(255, 238, 190, 0.8);
-  --twinkle-cool: rgba(200, 236, 255, 0.8);
+  --night-top: #050b14;  /* 顶部：极深靛蓝 */
+  --night-mid: #062758;  /* 中部：深蓝 */
+  --night-yellow: #1783c7;
+  --night-bot: #29d8c9;  /* 底部：明显的青色 */
+  
+  --star-color: #fff;
+  
+  /* 许愿云朵配色 */
+  --cloud-yellow-bg: rgba(255, 248, 220, 0.92);
+  --cloud-yellow-text: #785c25;
+  --cloud-cyan-bg: rgba(200, 245, 255, 0.92);
+  --cloud-cyan-text: #2a6075;
+  
+  --input-bg: rgba(255, 255, 255, 0.95);
 }
 
 * {
@@ -19,9 +23,9 @@
 }
 
 body {
-  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", "Noto Sans CJK SC", sans-serif;
-  background: var(--night-deep);
-  color: #e9f4ff;
+  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--night-top);
+  color: #fff;
   min-height: 100vh;
   overflow: hidden;
 }
@@ -36,85 +40,82 @@ body {
   overflow: hidden;
 }
 
+/* --- 1. 背景修复：强制的上下渐变 --- */
 .gradient {
   position: absolute;
   inset: 0;
-  background:
-    radial-gradient(circle at 18% 22%, rgba(76, 129, 198, 0.45), transparent 46%),
-    radial-gradient(circle at 82% 18%, rgba(111, 175, 220, 0.35), transparent 42%),
-    radial-gradient(circle at 55% 82%, rgba(120, 204, 220, 0.35), transparent 45%),
-    linear-gradient(180deg, var(--night-deep) 0%, var(--night-mid) 52%, var(--night-glow) 100%);
+  background: linear-gradient(
+    180deg, 
+    var(--night-top) 0%, 
+    var(--night-mid) 55%, 
+    var(--night-bot) 100%
+  );
+  z-index: 0;
 }
-
-.stars {
-  position: absolute;
-  inset: 0;
-  background-image:
-    radial-gradient(2.5px 2.5px at 12% 18%, var(--twinkle-warm), transparent 55%),
-    radial-gradient(1.8px 1.8px at 22% 45%, var(--twinkle-soft), transparent 55%),
-    radial-gradient(1.6px 1.6px at 36% 28%, var(--twinkle-cool), transparent 55%),
-    radial-gradient(2.2px 2.2px at 48% 18%, var(--twinkle-warm), transparent 55%),
-    radial-gradient(1.4px 1.4px at 58% 42%, var(--twinkle-soft), transparent 55%),
-    radial-gradient(1.8px 1.8px at 66% 22%, var(--twinkle-cool), transparent 55%),
-    radial-gradient(2px 2px at 78% 34%, var(--twinkle-warm), transparent 55%),
-    radial-gradient(1.4px 1.4px at 86% 18%, var(--twinkle-soft), transparent 55%),
-    radial-gradient(1.6px 1.6px at 14% 64%, var(--twinkle-soft), transparent 55%),
-    radial-gradient(2px 2px at 28% 72%, var(--twinkle-warm), transparent 55%),
-    radial-gradient(1.5px 1.5px at 40% 62%, var(--twinkle-cool), transparent 55%),
-    radial-gradient(2.4px 2.4px at 52% 70%, var(--twinkle-warm), transparent 55%),
-    radial-gradient(1.6px 1.6px at 66% 60%, var(--twinkle-soft), transparent 55%),
-    radial-gradient(1.4px 1.4px at 78% 68%, var(--twinkle-cool), transparent 55%),
-    radial-gradient(2.2px 2.2px at 90% 58%, var(--twinkle-warm), transparent 55%);
-  opacity: 0.85;
-  animation: twinkle 7.5s infinite ease-in-out;
-}
-
-.stars::before,
-.stars::after {
+/* 叠加一层暗角，让四周暗中间亮，增加深邃感 */
+.gradient::after {
   content: "";
   position: absolute;
   inset: 0;
-  background-repeat: no-repeat;
-  opacity: 0.7;
+  background: radial-gradient(circle at center, transparent 0%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
 }
 
-.stars::before {
-  background-image:
-    radial-gradient(1.2px 1.2px at 8% 30%, rgba(255, 255, 255, 0.55), transparent 60%),
-    radial-gradient(1.8px 1.8px at 20% 12%, rgba(210, 242, 255, 0.7), transparent 60%),
-    radial-gradient(1.4px 1.4px at 34% 50%, rgba(255, 247, 210, 0.6), transparent 60%),
-    radial-gradient(1.2px 1.2px at 50% 36%, rgba(255, 255, 255, 0.5), transparent 60%),
-    radial-gradient(1.6px 1.6px at 62% 15%, rgba(220, 240, 255, 0.6), transparent 60%),
-    radial-gradient(1.3px 1.3px at 74% 46%, rgba(255, 248, 210, 0.6), transparent 60%),
-    radial-gradient(1.5px 1.5px at 88% 32%, rgba(255, 255, 255, 0.55), transparent 60%),
-    radial-gradient(1.4px 1.4px at 24% 84%, rgba(220, 245, 255, 0.6), transparent 60%),
-    radial-gradient(1.2px 1.2px at 46% 88%, rgba(255, 246, 210, 0.6), transparent 60%),
-    radial-gradient(1.6px 1.6px at 70% 80%, rgba(255, 255, 255, 0.55), transparent 60%),
-    radial-gradient(1.4px 1.4px at 86% 74%, rgba(220, 245, 255, 0.6), transparent 60%);
-  animation: twinkle 9s infinite ease-in-out;
+/* --- 2. 星星修复：使用 box-shadow 粒子技术 --- */
+/* 小星星 */
+.stars-sm {
+  position: absolute;
+  top: 0; left: 0;
+  width: 1px; height: 1px;
+  background: transparent;
+  z-index: 1;
+  /* 利用 box-shadow 生成繁星 */
+  box-shadow: 
+    10vw 10vh #fff, 20vw 80vh #fff, 30vw 30vh #fff, 40vw 50vh #fff, 
+    50vw 10vh #fff, 60vw 90vh #fff, 70vw 20vh #fff, 80vw 60vh #fff,
+    90vw 40vh #fff, 15vw 60vh #fff, 25vw 20vh #fff, 35vw 90vh #fff,
+    45vw 40vh #fff, 55vw 80vh #fff, 65vw 10vh #fff, 75vw 50vh #fff,
+    85vw 30vh #fff, 95vw 70vh #fff, 5vw 35vh #fff, 92vw 15vh #fff,
+    12vw 85vh #fff, 38vw 5vh #fff, 52vw 95vh #fff, 68vw 45vh #fff,
+    82vw 12vh #fff, 98vw 88vh #fff, 3vw 55vh #fff, 28vw 75vh #fff;
+  animation: twinkle 4s infinite ease-in-out;
+  opacity: 0.8;
 }
 
-.stars::after {
-  background-image:
-    radial-gradient(2px 2px at 16% 38%, rgba(255, 235, 180, 0.75), transparent 60%),
-    radial-gradient(1.6px 1.6px at 32% 20%, rgba(200, 230, 255, 0.7), transparent 60%),
-    radial-gradient(2.2px 2.2px at 44% 30%, rgba(255, 255, 255, 0.65), transparent 60%),
-    radial-gradient(1.4px 1.4px at 58% 26%, rgba(255, 245, 200, 0.7), transparent 60%),
-    radial-gradient(1.8px 1.8px at 72% 38%, rgba(210, 240, 255, 0.7), transparent 60%),
-    radial-gradient(2px 2px at 82% 16%, rgba(255, 255, 255, 0.7), transparent 60%),
-    radial-gradient(1.6px 1.6px at 12% 76%, rgba(255, 255, 255, 0.6), transparent 60%),
-    radial-gradient(1.8px 1.8px at 34% 70%, rgba(255, 235, 185, 0.7), transparent 60%),
-    radial-gradient(2px 2px at 60% 84%, rgba(200, 232, 255, 0.7), transparent 60%),
-    radial-gradient(1.6px 1.6px at 80% 66%, rgba(255, 255, 255, 0.6), transparent 60%);
-  animation: twinkle 6.8s infinite ease-in-out;
+/* 中星星 */
+.stars-md {
+  position: absolute;
+  top: 0; left: 0;
+  width: 2px; height: 2px;
+  background: transparent;
+  z-index: 1;
+  box-shadow: 
+    12vw 15vh #fffae0, 35vw 65vh #d4f5ff, 55vw 25vh #fff, 78vw 85vh #fffae0,
+    88vw 15vh #d4f5ff, 42vw 45vh #fff, 8vw 90vh #fff, 62vw 55vh #fffae0,
+    25vw 35vh #d4f5ff, 92vw 50vh #fff;
+  animation: twinkle 6s infinite ease-in-out 1s; /* 延迟1s，错峰闪烁 */
+  opacity: 0.9;
+}
+
+/* 大星星 (发光) */
+.stars-lg {
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px; height: 3px;
+  background: transparent;
+  z-index: 1;
+  box-shadow: 
+    20vw 20vh #fff, 80vw 30vh #ffe, 50vw 80vh #eef;
+  filter: drop-shadow(0 0 3px rgba(255,255,255,0.8));
+  animation: twinkle 5s infinite ease-in-out 2s;
 }
 
 @keyframes twinkle {
-  0%, 100% { opacity: 0.85; }
-  40% { opacity: 0.55; }
-  70% { opacity: 0.75; }
+  0%, 100% { opacity: 0.9; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.7); }
 }
 
+/* --- 3. 镂空大字 --- */
 .firework-text {
   position: absolute;
   inset: 0;
@@ -122,91 +123,96 @@ body {
   align-items: center;
   justify-content: center;
   pointer-events: none;
-  text-transform: uppercase;
-  letter-spacing: 0.18em;
-  font-weight: 600;
-  font-size: clamp(32px, 7vw, 90px);
-  color: rgba(255, 217, 140, 0.32);
-  mix-blend-mode: screen;
-  text-shadow:
-    0 0 12px rgba(255, 219, 150, 0.45),
-    0 0 24px rgba(255, 200, 120, 0.2);
+  z-index: 2;
+  font-weight: 800;
+  font-size: clamp(40px, 9vw, 110px);
+  letter-spacing: 0.1em;
+  color: transparent;
+  /* 使用 text-stroke 实现镂空 */
+  -webkit-text-stroke: 1.5px rgba(255, 235, 160, 0.4); 
+  text-shadow: 0 0 20px rgba(255, 220, 100, 0.25);
+  animation: breathe 5s infinite ease-in-out;
 }
 
 .firework-text span {
-  position: relative;
-  padding: 16px 24px;
-  border: 2px dashed rgba(255, 212, 90, 0.45);
-  border-radius: 40px;
-  box-shadow: 0 0 14px rgba(255, 217, 140, 0.25);
-  animation: sparkle 4.5s infinite ease-in-out;
+  border: none !important;
+  box-shadow: none !important;
+  padding: 0 !important;
 }
 
-@keyframes sparkle {
-  0%, 100% { text-shadow: 0 0 10px rgba(255, 210, 120, 0.25); }
-  50% { text-shadow: 0 0 18px rgba(255, 230, 170, 0.4); }
+@keyframes breathe {
+  0%, 100% { opacity: 0.7; filter: drop-shadow(0 0 2px rgba(255,220,100,0.3)); }
+  50% { opacity: 0.4; filter: drop-shadow(0 0 8px rgba(255,220,100,0.1)); }
 }
 
+/* --- 4. 许愿云朵 --- */
 .wishes {
   position: absolute;
   inset: 0;
   pointer-events: none;
+  z-index: 4;
 }
 
 .wish {
   position: absolute;
-  padding: 10px 18px;
-  background: rgba(10, 30, 60, 0.35);
-  border-radius: 18px;
-  color: #f3fbff;
-  font-size: 18px;
+  padding: 12px 20px;
+  border-radius: 24px 24px 24px 4px;
+  font-size: 17px;
+  font-weight: 600;
   line-height: 1.4;
-  text-shadow: 0 0 8px var(--wish-glow);
+  box-shadow: 0 4px 16px rgba(0,0,0,0.15);
   opacity: 0;
-  transform: translateY(30px) scale(0.98);
-  animation: rise 9s ease forwards;
-  max-width: min(70vw, 500px);
-  backdrop-filter: blur(2px);
+  transform: translateY(40px) scale(0.9);
+  animation: rise 10s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  max-width: min(65vw, 420px);
+  /* 增加轻微透光感 */
+  backdrop-filter: blur(2px); 
+}
+
+.wish.yellow {
+  background: var(--cloud-yellow-bg);
+  color: var(--cloud-yellow-text);
+  border: 1px solid rgba(255,255,255,0.4);
+}
+
+.wish.cyan {
+  background: var(--cloud-cyan-bg);
+  color: var(--cloud-cyan-text);
+  border: 1px solid rgba(255,255,255,0.5);
 }
 
 .wish.float {
-  animation: float 6s ease-in-out infinite;
+  animation: float 6s ease-in-out infinite alternate;
   opacity: 1;
 }
 
 @keyframes rise {
-  0% {
-    opacity: 0;
-    transform: translateY(40px) scale(0.95);
-  }
-  30% {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-  100% {
-    opacity: 1;
-    transform: translateY(-120px) scale(1.02);
-  }
+  0% { opacity: 0; transform: translateY(60px) scale(0.8) rotate(3deg); }
+  25% { opacity: 1; transform: translateY(0) scale(1) rotate(0deg); }
+  100% { opacity: 1; transform: translateY(-150px) scale(1) rotate(-2deg); }
 }
 
 @keyframes float {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-6px); }
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-12px); }
 }
 
+/* --- 5. 底部输入栏 --- */
 .input-bar {
   position: absolute;
   left: 50%;
-  bottom: 36px;
+  bottom: 40px;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 12px;
-  width: min(720px, 86vw);
-  padding: 12px 16px;
+  width: min(600px, 85vw);
+  padding: 8px 10px 8px 16px; /* 右侧padding减小给按钮留空 */
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.94);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), inset 0 0 12px var(--input-shadow);
+  background: var(--input-bg);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.3),
+    inset 0 1px 2px rgba(255,255,255,0.8);
   z-index: 5;
 }
 
@@ -215,101 +221,86 @@ body {
   background: transparent;
   border: none;
   outline: none;
-  font-size: 18px;
-  color: #1b2b47;
+  font-size: 16px;
+  color: #333;
 }
+.input-bar input::placeholder { color: #889bb3; }
 
-.input-bar input::placeholder {
-  color: #7584a1;
-}
-
+/* 纸飞机按钮 */
 .send-button {
   position: relative;
-  width: 48px;
-  height: 48px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   border: none;
-  background: var(--highlight);
+  background: linear-gradient(135deg, #ffd659, #ffc02e); /* 金黄色渐变 */
   cursor: pointer;
-  box-shadow: 0 6px 16px rgba(255, 206, 92, 0.5);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  box-shadow: 0 4px 12px rgba(255, 190, 40, 0.4);
+  transition: transform 0.1s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
-.send-button:active {
-  transform: scale(0.9);
-  box-shadow: 0 3px 10px rgba(255, 206, 92, 0.35);
-}
+.send-button:active { transform: scale(0.9); }
 
 .send-button .plane {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 0;
-  height: 0;
-  border-left: 10px solid transparent;
-  border-right: 10px solid transparent;
-  border-bottom: 18px solid #ffffff;
-  transform: translate(-50%, -55%) rotate(45deg);
+  width: 0; height: 0;
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-bottom: 14px solid #fff;
+  transform: rotate(45deg) translate(-1px, 1px);
 }
 
-.send-button .trail {
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: rgba(255, 239, 200, 0.9);
-  opacity: 0;
+.send-button.fly .plane { animation: flyIcon 0.6s ease-in forwards; }
+
+@keyframes flyIcon {
+  0% { transform: rotate(45deg) translate(-1px, 1px); }
+  50% { transform: translate(30px, -30px) rotate(45deg) scale(0.6); opacity: 1; }
+  100% { transform: translate(60px, -60px) rotate(45deg) scale(0); opacity: 0; }
 }
 
-.send-button.fly .plane {
-  animation: fly 0.6s ease forwards;
-}
-
-.send-button.fly .trail {
-  animation: trail 0.6s ease forwards;
-}
-
-@keyframes fly {
-  0% { transform: translate(-50%, -55%) rotate(45deg); }
-  70% { transform: translate(30px, -30px) rotate(45deg); opacity: 1; }
-  100% { transform: translate(38px, -42px) rotate(45deg); opacity: 0; }
-}
-
-@keyframes trail {
-  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
-  40% { opacity: 0.8; transform: translate(-20%, -20%) scale(1); }
-  100% { opacity: 0; transform: translate(10px, -10px) scale(1.4); }
-}
-
+/* --- 6. 流星修复：轨迹与拖尾一致 --- */
 .meteor {
   position: absolute;
-  width: var(--meteor-width, 160px);
+  /* 先把流星设为一个水平的线条 */
+  width: 150px;
   height: 2px;
-  background: linear-gradient(90deg, rgba(255, 255, 255, 0), rgba(255, 238, 200, 0.9), rgba(255, 255, 255, 0));
-  top: var(--meteor-top, 18%);
-  left: var(--meteor-left, -30%);
+  /* 关键：渐变从左透明(尾)到右白(头) */
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9));
+  
+  /* 初始位置：屏幕左上外侧 */
+  top: -100px;
+  left: -100px;
+  
   opacity: 0;
-  transform: rotate(var(--meteor-angle, -22deg));
-  filter: drop-shadow(0 0 6px rgba(255, 241, 200, 0.65));
+  z-index: 2;
+  /* 头部增加一点光晕 */
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(255,255,255,0.8);
 }
 
 .meteor.active {
-  animation: meteor 1.4s ease-out forwards;
+  /* 旋转45度，并执行位移动画 */
+  /* 因为线条本来是水平的，旋转45度后就是左上指向右下 */
+  /* 位移时也必须按照 X=Y 的比例移动 */
+  animation: meteorDash 1.4s ease-out forwards;
 }
 
-@keyframes meteor {
-  0% { opacity: 0; transform: translate(0, 0) rotate(var(--meteor-angle, -22deg)); }
-  15% { opacity: 1; }
-  100% { opacity: 0; transform: translate(var(--meteor-x, 140vw), var(--meteor-y, 48vh)) rotate(var(--meteor-angle, -22deg)); }
+@keyframes meteorDash {
+  0% {
+    opacity: 1;
+    transform: translate(0, 0) rotate(45deg); 
+  }
+  100% {
+    opacity: 0;
+    /* 往右下角飞：X和Y都增加 */
+    transform: translate(120vw, 120vh) rotate(45deg);
+  }
 }
 
 @media (max-width: 768px) {
-  .firework-text {
-    font-size: 28px;
-  }
-  .wish {
-    font-size: 16px;
-  }
+  .firework-text { font-size: 32px; }
+  .wish { font-size: 15px; padding: 10px 14px; }
+  .input-bar { width: 92vw; bottom: 25px; }
 }

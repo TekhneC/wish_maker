@@ -3,24 +3,23 @@ const input = document.getElementById("wish-input");
 const sendButton = document.getElementById("send-button");
 const meteor = document.querySelector(".meteor");
 
-const MAX_WISHES = 28;
-const RECENT_LIMIT = 10;
-const RANDOM_LIMIT = 12;
+const MAX_WISHES = 24; // 稍微减少数量，因为现在云朵比较大
+const RECENT_LIMIT = 8;
+const RANDOM_LIMIT = 10;
 const PLACED_WISHES = [];
 
 const clamp = (value, min, max) => Math.min(Math.max(value, min), max);
-
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 const getBounds = () => {
-  const padding = 40;
+  const padding = 20;
   const inputBar = document.querySelector(".input-bar");
   const inputRect = inputBar.getBoundingClientRect();
   return {
     minX: padding,
     maxX: window.innerWidth - padding,
     minY: padding,
-    maxY: inputRect.top - 60,
+    maxY: inputRect.top - 80, // 避开输入框更多一点
   };
 };
 
@@ -29,29 +28,38 @@ const findPosition = (width, height) => {
   let x = bounds.minX + Math.random() * (bounds.maxX - bounds.minX - width);
   let y = bounds.minY + Math.random() * (bounds.maxY - bounds.minY - height);
 
-  for (let i = 0; i < 14; i += 1) {
+  for (let i = 0; i < 20; i += 1) {
     const overlap = PLACED_WISHES.some((item) => {
-      const xOverlap = x < item.x + item.width + 14 && x + width > item.x - 14;
+      const xOverlap = x < item.x + item.width + 10 && x + width > item.x - 10;
       const yOverlap = y < item.y + item.height + 10 && y + height > item.y - 10;
       return xOverlap && yOverlap;
     });
-    if (!overlap) {
-      return { x, y };
-    }
-    x = clamp(x + (Math.random() > 0.5 ? 30 : -30), bounds.minX, bounds.maxX - width);
-    y = clamp(y - 24, bounds.minY, bounds.maxY - height);
+    if (!overlap) return { x, y };
+    
+    // 随机重试
+    x = Math.random() * (bounds.maxX - bounds.minX - width) + bounds.minX;
+    y = Math.random() * (bounds.maxY - bounds.minY - height) + bounds.minY;
   }
   return { x, y };
 };
 
 const addWish = async (wish, shouldRise = true) => {
   const element = document.createElement("div");
-  element.className = "wish";
+  
+  // 随机分配黄色或青色样式，模拟参考图的贴纸感
+  const variant = Math.random() > 0.5 ? "yellow" : "cyan";
+  element.className = `wish ${variant}`;
   element.textContent = wish.text;
+  
+  // 随机给一个微小的旋转角度，增加手绘贴纸的自然感
+  const randomRotate = Math.random() * 6 - 3; // -3deg ~ 3deg
+  element.style.setProperty("--r", `${randomRotate}deg`);
 
   wishLayer.appendChild(element);
+  
   const rect = element.getBoundingClientRect();
   const { x, y } = findPosition(rect.width, rect.height);
+  
   element.style.left = `${x}px`;
   element.style.top = `${y}px`;
 
@@ -65,12 +73,13 @@ const addWish = async (wish, shouldRise = true) => {
 
   if (!shouldRise) {
     element.style.opacity = "1";
-    element.style.transform = "translateY(0)";
+    element.style.transform = `translateY(0) rotate(${randomRotate}deg)`;
     element.classList.add("float");
     return;
   }
 
-  await sleep(1200);
+  // 动画延迟
+  await sleep(1000);
   element.classList.add("float");
 };
 
@@ -81,10 +90,7 @@ const fetchInit = async () => {
     const data = await response.json();
     const recent = data.recent || [];
     const random = data.random || [];
-
-    [...recent, ...random].forEach((wish) => {
-      addWish(wish, false);
-    });
+    [...recent, ...random].forEach((wish) => addWish(wish, false));
   } catch (error) {
     console.error(error);
   }
@@ -99,6 +105,7 @@ const sendWish = async () => {
 
   sendButton.classList.add("fly");
   await sleep(300);
+
   try {
     const response = await fetch("/api/submit", {
       method: "POST",
@@ -106,9 +113,7 @@ const sendWish = async () => {
       body: JSON.stringify({ text }),
     });
 
-    if (!response.ok) {
-      return;
-    }
+    if (!response.ok) return;
 
     const wish = await response.json();
     addWish(wish, true);
@@ -117,7 +122,7 @@ const sendWish = async () => {
   } catch (error) {
     console.error(error);
   } finally {
-    setTimeout(() => sendButton.classList.remove("fly"), 700);
+    setTimeout(() => sendButton.classList.remove("fly"), 600);
   }
 };
 
@@ -128,38 +133,17 @@ const handleKey = (event) => {
   }
 };
 
-const randomBetween = (min, max) => min + Math.random() * (max - min);
-
-const launchMeteor = () => {
-  const top = `${randomBetween(6, 32).toFixed(1)}%`;
-  const angle = `${randomBetween(-28, -16).toFixed(1)}deg`;
-  const width = `${randomBetween(140, 220).toFixed(0)}px`;
-  const startLeft = `${randomBetween(-35, -15).toFixed(1)}%`;
-  const travelX = `${randomBetween(130, 170).toFixed(0)}vw`;
-  const travelY = `${randomBetween(30, 55).toFixed(0)}vh`;
-
-  meteor.style.setProperty("--meteor-top", top);
-  meteor.style.setProperty("--meteor-left", startLeft);
-  meteor.style.setProperty("--meteor-angle", angle);
-  meteor.style.setProperty("--meteor-width", width);
-  meteor.style.setProperty("--meteor-x", travelX);
-  meteor.style.setProperty("--meteor-y", travelY);
-
-  meteor.classList.add("active");
-  setTimeout(() => meteor.classList.remove("active"), 1600);
-};
-
 const scheduleMeteor = () => {
-  const nextTime = 6000 + Math.random() * 14000;
+  const nextTime = 4000 + Math.random() * 6000;
   setTimeout(() => {
-    launchMeteor();
+    meteor.classList.add("active");
+    setTimeout(() => meteor.classList.remove("active"), 1500);
     scheduleMeteor();
   }, nextTime);
 };
 
 sendButton.addEventListener("click", sendWish);
 input.addEventListener("keydown", handleKey);
-
 fetchInit();
 scheduleMeteor();
 input.focus();
