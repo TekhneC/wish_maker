@@ -128,11 +128,31 @@ const handleKey = (event) => {
   }
 };
 
+const randomBetween = (min, max) => min + Math.random() * (max - min);
+
+const launchMeteor = () => {
+  const top = `${randomBetween(6, 32).toFixed(1)}%`;
+  const angle = `${randomBetween(-28, -16).toFixed(1)}deg`;
+  const width = `${randomBetween(140, 220).toFixed(0)}px`;
+  const startLeft = `${randomBetween(-35, -15).toFixed(1)}%`;
+  const travelX = `${randomBetween(130, 170).toFixed(0)}vw`;
+  const travelY = `${randomBetween(30, 55).toFixed(0)}vh`;
+
+  meteor.style.setProperty("--meteor-top", top);
+  meteor.style.setProperty("--meteor-left", startLeft);
+  meteor.style.setProperty("--meteor-angle", angle);
+  meteor.style.setProperty("--meteor-width", width);
+  meteor.style.setProperty("--meteor-x", travelX);
+  meteor.style.setProperty("--meteor-y", travelY);
+
+  meteor.classList.add("active");
+  setTimeout(() => meteor.classList.remove("active"), 1600);
+};
+
 const scheduleMeteor = () => {
-  const nextTime = 3000 + Math.random() * 5000;
+  const nextTime = 6000 + Math.random() * 14000;
   setTimeout(() => {
-    meteor.classList.add("active");
-    setTimeout(() => meteor.classList.remove("active"), 1600);
+    launchMeteor();
     scheduleMeteor();
   }, nextTime);
 };
