@@ -138,6 +138,16 @@ def submit_wish():
 
     return jsonify({"id": wish_id, "text": text, "created_at": created_at})
 
+@app.route("/api/delete/<int:wish_id>", methods=["DELETE"])
+def delete_wish(wish_id):
+    try:
+        with get_connection() as conn:
+            conn.execute("DELETE FROM wishes WHERE id = ?", (wish_id,))
+            conn.commit()
+        return jsonify({"status": "deleted", "id": wish_id})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 
 if __name__ == "__main__":
     init_db()

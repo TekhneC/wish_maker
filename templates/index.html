@@ -10,33 +10,34 @@
   <main class="sky">
     <div class="gradient"></div>
     
-    <div class="stars-sm" aria-hidden="true"></div>
-    <div class="stars-md" aria-hidden="true"></div>
-    <div class="stars-lg" aria-hidden="true"></div>
-    
-    <div class="firework-text" aria-hidden="true">
-      <span>
-        <p>NEXT LAB</p>
-        <p>TOWARDS 2026</p>
-      </span>
-    </div>
+    <canvas id="particle-canvas"></canvas>
 
-    <div class="meteor" aria-hidden="true"></div>
+    <div class="firework-text" aria-hidden="true">
+        <span>NEXT LAB</span>
+        <span>TOWARDS 2026</span>
+    </div>
 
     <section class="wishes" id="wish-layer" aria-live="polite"></section>
 
     <div class="input-bar">
-      <input 
-        id="wish-input" 
-        type="text" 
-        maxlength="{{ max_length }}" 
-        placeholder="写下新年寄语..." 
+      <input
+        id="wish-input"
+        type="text"
+        maxlength="{{ max_length }}"
+        placeholder="写下新年寄语..."
         autocomplete="off"
       />
       <button id="send-button" class="send-button" aria-label="发送">
         <span class="plane"></span>
         <span class="trail"></span>
       </button>
+    </div>
+
+    <div class="controls">
+      <label class="switch">
+        <input type="checkbox" id="firework-toggle">
+        <span class="slider">🎉 烟花模式</span>
+      </label>
     </div>
   </main>
   <script src="/static/js/main.js"></script>

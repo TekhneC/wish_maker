@@ -1,16 +1,25 @@
 :root {
   color-scheme: dark;
-  /* 你定义的新背景色 */
-  --night-top: #050b14;
-  --night-mid: #062758;
-  --night-bot: #29d8c9;
+  /* 背景色系：更深邃的午夜蓝 */
+  --night-deep: #050b14;
+  --night-mid: #0b1a3a;
+  --night-glow: #1a3c6e;
+  --night-bot: #16b5c4;
   
-  --cloud-yellow-bg: rgba(255, 248, 220, 0.95);
-  --cloud-yellow-text: #785c25;
-  --cloud-cyan-bg: rgba(200, 245, 255, 0.95);
-  --cloud-cyan-text: #2a6075;
+  /* 强调色 */
+  --highlight: #ffd45a;
   
-  --input-bg: rgba(255, 255, 255, 0.95);
+  /* 毛玻璃卡片风格 */
+  --wish-bg: rgba(255, 255, 255, 0.12);
+  --wish-border: rgba(255, 255, 255, 0.25);
+  --wish-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  
+  /* 文本颜色 */
+  --text-primary: #ffffff;
+  --text-secondary: rgba(255, 255, 255, 0.85);
+  
+  /* 输入框阴影 */
+  --input-shadow: rgba(255, 255, 255, 0.35);
 }
 
 * {
@@ -19,258 +28,341 @@
   padding: 0;
 }
 
+@font-face {
+  font-family: 'MyNewYearFont'; /* 你自己起的名字 */
+  /* 这里的路径是相对于 css 文件的，或者用绝对路径 /static/fonts/... */
+  src: url('/static/fonts/PingFangZhuiGuangTi-2.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+  font-display: swap; /* 确保字体加载前显示默认字，防止文字隐形 */
+}
+
 body {
-  font-family: "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
-  background: var(--night-top);
-  color: #fff;
+  font-family: "MyNewYearFont","PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif;
+  background: var(--night-deep);
+  color: var(--text-primary);
   min-height: 100vh;
-  overflow: hidden;
-  user-select: none; /* 防止拖拽文字 */
+  overflow: hidden; /* 禁止滚动，全屏展示 */
 }
 
 .sky {
   position: relative;
-  min-height: 100vh;
-  width: 100%;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
 }
 
-/* 1. 背景 */
+/* 1. 背景渐变层 (最底层) */
 .gradient {
   position: absolute;
   inset: 0;
-  background: linear-gradient(
-    180deg, 
-    var(--night-top) 0%, 
-    var(--night-mid) 40%, 
-    var(--night-bot) 100%
-  );
+  background: 
+    radial-gradient(circle at 50% 160%, var(--night-bot), transparent 50%),
+    radial-gradient(circle at 50% 110%, var(--night-glow), transparent 60%),
+    linear-gradient(to top, var(--night-mid), var(--night-deep));
   z-index: 0;
 }
-.gradient::after {
-  content: "";
+
+/* 2. 粒子画布层 (用于星空和烟花) */
+#particle-canvas {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at center, transparent 20%, rgba(0,0,0,0.3) 100%);
-  pointer-events: none;
-}
-
-/* 2. 星星粒子 (保持之前的 box-shadow 实现) */
-.stars-sm, .stars-md, .stars-lg {
-  position: absolute;
-  top: 0; left: 0;
-  background: transparent;
   z-index: 1;
+  pointer-events: none; /* 确保不阻挡鼠标点击 */
 }
 
-.stars-sm {
-  width: 1px; height: 1px;
-  box-shadow: 
-    10vw 10vh #fff, 20vw 80vh #fff, 30vw 30vh #fff, 40vw 50vh #fff, 
-    50vw 10vh #fff, 60vw 90vh #fff, 70vw 20vh #fff, 80vw 60vh #fff,
-    90vw 40vh #fff, 15vw 60vh #fff, 25vw 20vh #fff, 35vw 90vh #fff,
-    45vw 40vh #fff, 55vw 80vh #fff, 65vw 10vh #fff, 75vw 50vh #fff,
-    85vw 30vh #fff, 95vw 70vh #fff, 5vw 35vh #fff, 92vw 15vh #fff;
-  animation: twinkle 7s infinite ease-in-out;
-  opacity: 0.7;
-}
-
-.stars-md {
-  width: 2px; height: 2px;
-  box-shadow: 
-    12vw 15vh #fffae0, 35vw 65vh #d4f5ff, 55vw 25vh #fff, 78vw 85vh #fffae0,
-    88vw 15vh #d4f5ff, 42vw 45vh #fff, 8vw 90vh #fff;
-  animation: twinkle 6s infinite ease-in-out 1s;
-  opacity: 0.8;
-}
-
-.stars-lg {
-  width: 3px; height: 3px;
-  box-shadow: 20vw 20vh #fff, 80vw 30vh #ffe, 50vw 80vh #eef;
-  filter: drop-shadow(0 0 3px rgba(255,255,255,0.8));
-  animation: twinkle 5s infinite ease-in-out 2s;
-}
-
-@keyframes twinkle {
-  0%, 100% { opacity: 0.8; transform: scale(1); }
-  50% { opacity: 0.3; transform: scale(0.5); }
-}
-
-/* 3. 烟花粒子大字 (新实现) */
+/* 3. 装饰文字层 */
 .firework-text {
   position: absolute;
   inset: 0;
   display: flex;
+  flex-direction: column; /* 关键：改为纵向排列，支持两行文字 */
   align-items: center;
   justify-content: center;
   pointer-events: none;
   z-index: 2;
+  gap: 0px; /* 行间距 */
   
+  /* 字体设定 */
   font-weight: 900;
-  font-size: clamp(40px, 9vw, 110px);
+  /* 稍微调整字体大小策略，兼顾两行显示 */
+  font-size: clamp(100px, 9vw, 120px);
   letter-spacing: 0.12em;
+  line-height: 1.2;
   
-  /* 核心技巧：背景是重复的径向渐变（圆点），clip 到文字上 */
-  color: transparent;
-  background-image: radial-gradient(circle, rgba(255, 230, 150, 0.9) 20%, transparent 25%),
-                    radial-gradient(circle, rgba(255, 255, 255, 0.8) 20%, transparent 25%);
+  /* --- 核心技巧：背景是重复的径向渐变（圆点），clip 到文字上 --- */
+  color: transparent; /* 文字本身透明 */
+  
+  /* 金色与白色的粒子点阵 */
+  background-image: 
+    radial-gradient(circle, rgba(255, 230, 150, 0.9) 20%, transparent 25%),
+    radial-gradient(circle, rgba(255, 255, 255, 0.8) 20%, transparent 25%);
+    
   background-size: 6px 6px, 10px 10px; /* 两种不同大小的点阵 */
   background-position: 0 0, 3px 3px;
+  
+  /* 标准属性与 Webkit 前缀 */
   -webkit-background-clip: text;
   background-clip: text;
   
-  /* 光晕 */
+  /* 光晕效果：增强辉光感 */
   filter: drop-shadow(0 0 5px rgba(255, 210, 80, 0.4)) 
           drop-shadow(0 0 15px rgba(255, 210, 80, 0.2));
   
-  /* 闪烁动画 */
+  /* 闪烁流动动画 */
   animation: shimmer 3s infinite linear;
 }
 
 /* 让背景图案移动，产生像火花流动的效果 */
 @keyframes shimmer {
-  0% { background-position: 0 0, 3px 3px; opacity: 0.8; }
-  50% { opacity: 1; filter: drop-shadow(0 0 8px rgba(255, 210, 80, 0.6)) drop-shadow(0 0 20px rgba(255, 210, 80, 0.3));}
-  100% { background-position: 6px 6px, 13px 13px; opacity: 0.8; }
+  0% { 
+    background-position: 0 0, 3px 3px; 
+    opacity: 0.8; 
+  }
+  50% { 
+    opacity: 1; 
+    filter: drop-shadow(0 0 8px rgba(255, 210, 80, 0.6)) 
+            drop-shadow(0 0 20px rgba(255, 210, 80, 0.3));
+  }
+  100% { 
+    background-position: 6px 6px, 13px 13px; 
+    opacity: 0.8; 
+  }
 }
 
+/* 强制清除 span 原有的装饰，只保留文字内容供父级裁切 */
 .firework-text span {
   border: none !important;
   box-shadow: none !important;
   padding: 0 !important;
+  margin: 0 !important;
+  animation: none !important; /* 去掉之前的 sparkle 动画，避免冲突 */
+  background: none !important;
 }
-
-/* 4. 许愿云朵 (移除 CSS 动画，只留样式) */
+/* 4. 寄语层 */
 .wishes {
   position: absolute;
   inset: 0;
-  pointer-events: none; /* JS 接管交互后，这里依然保持穿透，JS 会监听具体的 .wish 元素 */
-  z-index: 4;
+  pointer-events: none; /* 让鼠标事件穿透到下层的 input 或具体的 wish 上 */
+  z-index: 10;
 }
 
+/* 单个寄语样式 (毛玻璃效果) */
 .wish {
   position: absolute;
-  /* 初始位置由 JS 设置，这里只设基本样式 */
-  left: 0;
-  top: 0;
-  will-change: transform; /* 性能优化 */
+  padding: 12px 24px;
+  background: var(--wish-bg);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px); /* Safari 支持 */
+  border: 1px solid var(--wish-border);
+  box-shadow: var(--wish-shadow), inset 0 0 12px rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
   
-  padding: 12px 22px;
-  border-radius: 30px;
-  font-size: 17px;
-  font-weight: 600;
-  line-height: 1.4;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-  opacity: 0; /* JS 控制淡入 */
-  transform: translate3d(0,0,0); /* 开启 GPU 加速 */
+  color: var(--text-primary);
+  font-size: 18px;
+  font-weight: 400;
+  line-height: 1.5;
+  letter-spacing: 0.5px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.3);
   
-  max-width: min(60vw, 380px);
-  backdrop-filter: blur(4px);
-  pointer-events: auto; /* 允许鼠标交互 */
-  cursor: grab;
+  max-width: min(70vw, 500px);
+  word-break: break-all;
+  
+  /* 交互属性 */
+  pointer-events: auto; /* 允许点击 */
+  cursor: default;
+  user-select: none;
+  
+  /* 初始状态 (由 JS 控制进场) */
+  opacity: 0;
+  transform: scale(0.9);
+  transition: opacity 0.5s ease, transform 0.3s ease, background 0.3s;
 }
 
-.wish.yellow {
-  background: var(--cloud-yellow-bg);
-  color: var(--cloud-yellow-text);
-  border: 2px solid rgba(255,255,255,0.6);
+/* 悬停高亮 */
+.wish:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: rgba(255, 255, 255, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  z-index: 20 !important; /* 悬停时置顶 */
 }
 
-.wish.cyan {
-  background: var(--cloud-cyan-bg);
-  color: var(--cloud-cyan-text);
-  border: 2px solid rgba(255,255,255,0.7);
+/* 删除按钮 (右上角小红叉) */
+.wish .close-btn {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  width: 24px;
+  height: 24px;
+  background: rgba(15, 231, 255, 0.9);
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  
+  /* 默认隐藏，悬停显示 */
+  opacity: 0;
+  transform: scale(0);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.wish:hover .close-btn {
+  opacity: 1;
+  transform: scale(1);
 }
 
 /* 5. 底部输入栏 */
 .input-bar {
   position: absolute;
   left: 50%;
-  bottom: 40px;
+  bottom: 36px;
   transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 12px;
-  width: min(600px, 85vw);
-  padding: 8px 10px 8px 16px;
+  width: min(720px, 86vw);
+  padding: 12px 16px 10px 40px;
   border-radius: 999px;
-  background: var(--input-bg);
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.2),
-    inset 0 1px 2px rgba(255,255,255,0.9);
-  z-index: 5;
+  background: rgba(255, 255, 255, 0.94);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.25), inset 0 0 12px var(--input-shadow);
+  z-index: 50;
 }
 
 .input-bar input {
-  flex: 1;
+  flex: 2;
+  padding: 4px;
   background: transparent;
   border: none;
   outline: none;
-  font-size: 16px;
-  color: #333;
+  font-size: 18px;
+  font-family: 'MyNewYearFont';
+  color: #1b2b47;
 }
-.input-bar input::placeholder { color: #889bb3; }
 
+.input-bar input::placeholder {
+  color: #7584a1;
+}
+
+/* 纸飞机发送按钮 */
 .send-button {
   position: relative;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: 50%;
   border: none;
-  background: linear-gradient(135deg, #ffd659, #ffc02e);
+  background: var(--highlight);
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(255, 190, 40, 0.4);
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  box-shadow: 0 6px 16px rgba(255, 206, 92, 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+  flex-shrink: 0;
 }
 
-.send-button:active { transform: scale(0.9); }
+.send-button:active {
+  transform: scale(0.9);
+  box-shadow: 0 3px 10px rgba(255, 206, 92, 0.35);
+}
 
 .send-button .plane {
-  width: 0; height: 0;
-  border-left: 7px solid transparent;
-  border-right: 7px solid transparent;
-  border-bottom: 14px solid #fff;
-  transform: rotate(45deg) translate(-1px, 1px);
-}
-
-.send-button.fly .plane { animation: flyIcon 0.6s ease-in forwards; }
-
-@keyframes flyIcon {
-  0% { transform: rotate(45deg) translate(-1px, 1px); }
-  50% { transform: translate(30px, -30px) rotate(45deg) scale(0.6); opacity: 1; }
-  100% { transform: translate(60px, -60px) rotate(45deg) scale(0); opacity: 0; }
-}
-
-/* 6. 流星 */
-.meteor {
   position: absolute;
-  width: 150px;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9));
-  top: -100px;
-  left: -100px;
+  left: 50%;
+  top: 50%;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 18px solid #ffffff;
+  transform: translate(-50%, -55%) rotate(45deg);
+}
+
+.send-button .trail {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 239, 200, 0.9);
   opacity: 0;
-  z-index: 2;
-  border-radius: 2px;
-  box-shadow: 0 0 10px rgba(255,255,255,0.8);
 }
 
-.meteor.active {
-  animation: meteorDash 1.4s ease-out forwards;
+/* 飞机飞行动画 */
+.send-button.fly .plane {
+  animation: fly 0.6s ease forwards;
 }
 
-@keyframes meteorDash {
-  0% { opacity: 1; transform: translate(0, 0) rotate(45deg); }
-  100% { opacity: 0; transform: translate(120vw, 120vh) rotate(45deg); }
+.send-button.fly .trail {
+  animation: trail 0.6s ease forwards;
 }
 
+@keyframes fly {
+  0% { transform: translate(-50%, -55%) rotate(45deg); }
+  70% { transform: translate(30px, -30px) rotate(45deg); opacity: 1; }
+  100% { transform: translate(38px, -42px) rotate(45deg); opacity: 0; }
+}
+
+@keyframes trail {
+  0% { opacity: 0; transform: translate(-50%, -50%) scale(0.4); }
+  40% { opacity: 0.8; transform: translate(-20%, -20%) scale(1); }
+  100% { opacity: 0; transform: translate(10px, -10px) scale(1.4); }
+}
+
+/* 6. 右上角控制区 (开关) */
+.controls {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 60;
+}
+
+.switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 8px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border-radius: 20px;
+  backdrop-filter: blur(4px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  transition: all 0.3s;
+  user-select: none;
+}
+
+.switch:hover {
+  background: rgba(0, 0, 0, 0.6);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.switch input {
+  display: none;
+}
+
+.switch .slider {
+  color: #ccc;
+  font-size: 14px;
+  font-weight: 500;
+  transition: color 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.switch input:checked + .slider {
+  color: #ffd45a;
+  text-shadow: 0 0 8px rgba(255, 212, 90, 0.6);
+}
+
+/* 移动端适配 */
 @media (max-width: 768px) {
-  .firework-text { font-size: 32px; }
-  .wish { font-size: 15px; padding: 10px 14px; }
-  .input-bar { width: 92vw; bottom: 25px; }
+  .firework-text { font-size: 28px; }
+  .wish { font-size: 14px; padding: 10px 16px; }
+  .input-bar { width: 92vw; bottom: 20px; }
 }

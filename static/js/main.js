@@ -1,259 +1,360 @@
+/* static/js/main.js */
 const wishLayer = document.getElementById("wish-layer");
 const input = document.getElementById("wish-input");
 const sendButton = document.getElementById("send-button");
-const meteor = document.querySelector(".meteor");
+const fireworkToggle = document.getElementById("firework-toggle");
 
-const MAX_WISHES = 20; // 减少数量以保证碰撞流畅
-const RECENT_LIMIT = 8;
-const RANDOM_LIMIT = 10;
-
-// 物理系统配置
-const PHYSICS = {
-  friction: 0.999, // 空气阻力
-  restitution: 0.8, // 碰撞弹性 (1=完全弹性, 0=不反弹)
-  minSpeed: 0.01, // 最小漂浮速度
-  maxSpeed: 0.5, // 最大漂浮速度
+/* 配置参数 */
+const CONFIG = {
+  maxWishes: 18,         // 稍微减少数量以配合大字体
+  baseSpeed: 0.3,        // 稍微加快一点上升速度
+  floatAmp: 0.5,         
+  canvasStarCount: 150,
+  
+  // 气泡碰撞检测参数
+  wishWidth: 260,        // 估算的卡片宽度（用于碰撞计算）
+  wishHeight: 80,        // 估算的卡片高度
 };
 
-// 存储所有的 Wish 对象
-const wishes = [];
+let wishesData = []; 
+let isFireworkActive = false; 
 
-class Wish {
-  constructor(data, isNew = false) {
-    this.id = data.id;
-    this.text = data.text;
-    this.element = document.createElement("div");
-    
-    // 随机样式
-    const variant = Math.random() > 0.5 ? "yellow" : "cyan";
-    this.element.className = `wish ${variant}`;
-    this.element.textContent = this.text;
-    
-    wishLayer.appendChild(this.element);
-    
-    // 获取尺寸
-    const rect = this.element.getBoundingClientRect();
-    this.width = rect.width;
-    this.height = rect.height;
-    // 使用圆半径近似碰撞体积
-    this.radius = Math.max(this.width, this.height) / 2 * 0.9; 
+/* -----------------------------------------------------------
+   PART 1: Canvas 粒子系统 (增强版烟花 + 星空)
+   ----------------------------------------------------------- */
+const canvas = document.getElementById("particle-canvas");
+const ctx = canvas.getContext("2d");
+let particles = []; 
+let stars = [];     
 
-    // 初始化位置和速度
-    const bounds = this.getBounds();
-    
-    if (isNew) {
-      // 新发送的：从底部中间发射
-      this.x = window.innerWidth / 2 - this.width / 2;
-      this.y = window.innerHeight - 150;
-      this.vx = (Math.random() - 0.5) * 6; // 随机水平散射
-      this.vy = -(Math.random() * 3 + 4); // 向上冲力
-    } else {
-      // 历史加载：随机分布
-      this.x = Math.random() * (bounds.maxX - bounds.minX) + bounds.minX;
-      this.y = Math.random() * (bounds.maxY - bounds.minY) + bounds.minY;
-      // 赋予随机初始漂浮速度
-      this.vx = (Math.random() - 0.5) * 1;
-      this.vy = (Math.random() - 0.5) * 1;
-    }
+function resizeCanvas() {
+  canvas.width = window.innerWidth;
+  canvas.height = window.innerHeight;
+  initStars();
+}
 
-    // 淡入
-    requestAnimationFrame(() => {
-      this.element.style.opacity = "1";
+function initStars() {
+  stars = [];
+  for (let i = 0; i < CONFIG.canvasStarCount; i++) {
+    stars.push({
+      x: Math.random() * canvas.width,
+      y: Math.random() * canvas.height,
+      size: Math.random() * 1.5,
+      alpha: Math.random(),
+      fadeSpeed: 0.005 + Math.random() * 0.01
     });
-  }
-
-  getBounds() {
-    const padding = 20;
-    const inputRect = document.querySelector(".input-bar").getBoundingClientRect();
-    return {
-      minX: padding,
-      maxX: window.innerWidth - this.width - padding,
-      minY: padding,
-      maxY: inputRect.top - this.height - 40,
-    };
-  }
-
-  update() {
-    const bounds = this.getBounds();
-
-    // 1. 应用速度
-    this.x += this.vx;
-    this.y += this.vy;
-
-    // 2. 边界碰撞检测与反弹
-    if (this.x <= bounds.minX) {
-      this.x = bounds.minX;
-      this.vx *= -1;
-    } else if (this.x >= bounds.maxX) {
-      this.x = bounds.maxX;
-      this.vx *= -1;
-    }
-
-    if (this.y <= bounds.minY) {
-      this.y = bounds.minY;
-      this.vy *= -1;
-    } else if (this.y >= bounds.maxY) {
-      this.y = bounds.maxY;
-      this.vy *= -1;
-    }
-
-    // 3. 施加微小的随机扰动 (模拟气流)，防止静止
-    this.vx += (Math.random() - 0.5) * 0.05;
-    this.vy += (Math.random() - 0.5) * 0.05;
-
-    // 4. 速度限制 (防止过快或过慢)
-    const speed = Math.hypot(this.vx, this.vy);
-    if (speed > PHYSICS.maxSpeed) {
-      this.vx = (this.vx / speed) * PHYSICS.maxSpeed;
-      this.vy = (this.vy / speed) * PHYSICS.maxSpeed;
-    }
-    
-    // 渲染
-    this.element.style.transform = `translate(${this.x}px, ${this.y}px)`;
-  }
-
-  remove() {
-    this.element.style.opacity = "0";
-    setTimeout(() => {
-      if (this.element.parentNode) {
-        this.element.parentNode.removeChild(this.element);
-      }
-    }, 500);
   }
 }
 
-// 物理引擎核心循环
-const updatePhysics = () => {
-  // 1. 更新每个物体位置
-  wishes.forEach(w => w.update());
+// 增强版烟花粒子
+class FireworkParticle {
+  constructor(x, y, color, type = 'normal') {
+    this.x = x;
+    this.y = y;
+    this.color = color;
+    this.type = type; // 'normal' 或 'big'
 
-  // 2. 碰撞检测 (O(N^2) 对少量物体是可以接受的)
-  for (let i = 0; i < wishes.length; i++) {
-    for (let j = i + 1; j < wishes.length; j++) {
-      resolveCollision(wishes[i], wishes[j]);
+    this.air = type == 'big' ? 0.98 : 0.95
+
+    // 随机大小，制造层次感
+    this.size = (Math.random() * 2 + 0.5) * (type === 'big' ? 1.5 : 1);
+    
+    // 爆炸发散
+    const angle = Math.random() * Math.PI * 2;
+    // 这种速度分布会让烟花更像圆球
+    const velocity = Math.random() * (type === 'big' ? 7 : 4.5); 
+    this.vx = Math.cos(angle) * velocity;
+    this.vy = Math.sin(angle) * velocity;
+    
+    this.life =  (Math.random() + 2) * (type === 'big' ? 1.5 : 1); 
+    this.decay = 0.01 + Math.random() * 0.015; 
+    this.gravity = 0.03;
+  }
+
+  update() {
+    this.x += this.vx;
+    this.y += this.vy;
+    this.vy += this.gravity; 
+    this.vx *= this.air; // 空气阻力
+    this.vy *= this.air;
+    this.life -= this.decay;
+  }
+
+  draw(ctx) {
+    ctx.globalAlpha = Math.max(0, this.life);
+    ctx.fillStyle = this.color;
+    
+    // --- 核心修改：添加发光边缘 ---
+    // 注意：大量的 shadowBlur 会消耗性能，这里根据粒子寿命动态控制
+    if (this.life > 0.5) {
+      ctx.shadowBlur = 10; 
+      ctx.shadowColor = this.color;
+    } else {
+      ctx.shadowBlur = 0;
+    }
+
+    ctx.beginPath();
+    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+    ctx.fill();
+    
+    // 重置 shadow 避免影响其他绘制
+    ctx.shadowBlur = 0;
+    ctx.globalAlpha = 1.0;
+  }
+}
+
+// 触发烟花爆炸
+// type: 'normal' (随机小烟花) | 'big' (发送时的庆典烟花)
+function createExplosion(x, y, type = 'normal') {
+  const colors = ['#ffec44', '#ffbac4', '#4cccff', '#8bff64', '#ffce6b', '#fff9f9'];
+  const color = colors[Math.floor(Math.random() * colors.length)];
+  
+  // 大烟花粒子更多
+  const particleCount = type === 'big' ? 130 : 35; 
+  
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new FireworkParticle(x, y, color, type));
+  }
+}
+
+function renderLoop() {
+  // 使用 source-over 和带透明度的 clearRect 可以制造一点点拖尾效果（可选，这里保持清晰）
+  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+  // 1. 绘制星星
+  ctx.fillStyle = "#FFF";
+  stars.forEach(star => {
+    star.alpha += star.fadeSpeed;
+    if (star.alpha > 1 || star.alpha < 0.2) star.fadeSpeed = -star.fadeSpeed;
+    ctx.globalAlpha = star.alpha;
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.globalAlpha = 1.0;
+
+  // 2. 绘制烟花
+  if (particles.length > 0) {
+    for (let i = particles.length - 1; i >= 0; i--) {
+      const p = particles[i];
+      p.update();
+      p.draw(ctx);
+      if (p.life <= 0) particles.splice(i, 1);
     }
   }
-
-  requestAnimationFrame(updatePhysics);
-};
-
-// 处理两个泡泡的碰撞
-const resolveCollision = (w1, w2) => {
-  const dx = (w1.x + w1.width / 2) - (w2.x + w2.width / 2);
-  const dy = (w1.y + w1.height / 2) - (w2.y + w2.height / 2);
-  const distance = Math.hypot(dx, dy);
-  const minDist = w1.radius + w2.radius; // 简单的圆碰撞判定
-
-  if (distance < minDist) {
-    // 碰撞发生！
-    
-    // 1. 修正重叠 (将它们推开)
-    const overlap = minDist - distance;
-    const nx = dx / distance; // 法向量
-    const ny = dy / distance;
-    
-    // 各退一半
-    w1.x += nx * overlap * 0.5;
-    w1.y += ny * overlap * 0.5;
-    w2.x -= nx * overlap * 0.5;
-    w2.y -= ny * overlap * 0.5;
-
-    // 2. 交换动量 (简单弹性碰撞)
-    // 实际上对于等质量物体，只需交换法向速度分量，这里简化为交换速度并衰减
-    const tempVx = w1.vx;
-    const tempVy = w1.vy;
-    
-    w1.vx = w2.vx * PHYSICS.restitution;
-    w1.vy = w2.vy * PHYSICS.restitution;
-    w2.vx = tempVx * PHYSICS.restitution;
-    w2.vy = tempVy * PHYSICS.restitution;
-  }
-};
-
-
-const addWishToSystem = (data, isNew) => {
-  const wish = new Wish(data, isNew);
-  wishes.push(wish);
   
-  // 维护最大数量
-  if (wishes.length > MAX_WISHES) {
-    const removed = wishes.shift(); // 移除最早的
-    removed.remove();
+  // 3. 自动随机燃放
+  if (isFireworkActive && Math.random() < 0.02) { 
+    createExplosion(
+      Math.random() * canvas.width, 
+      Math.random() * canvas.height * 0.75
+    );
+  }
+
+  requestAnimationFrame(renderLoop);
+}
+
+
+/* -----------------------------------------------------------
+   PART 2: 寄语卡片逻辑 (防重叠 + 滚动刷新)
+   ----------------------------------------------------------- */
+
+// 检查位置是否与现有的卡片重叠
+const checkCollision = (x, y, existingWishes) => {
+  for (let w of existingWishes) {
+    // 简单的矩形距离检测
+    const dx = Math.abs(x - w.x);
+    const dy = Math.abs(y - w.y);
+    // 如果水平距离小于宽度，且垂直距离小于高度，则认为重叠
+    if (dx < CONFIG.wishWidth && dy < CONFIG.wishHeight) {
+      return true; // 发生碰撞
+    }
+  }
+  return false;
+};
+
+// 智能寻找空位
+// startFromBottom: true 表示从屏幕底部生成（新/循环），false 表示屏幕中间（初始化）
+const findFreePosition = (startFromBottom = true) => {
+  const padding = 20;
+  const minX = padding;
+  const maxX = window.innerWidth - padding - 220; // 留出一点右边距
+  
+  // 尝试 20 次寻找不重叠的位置
+  for (let i = 0; i < 20; i++) {
+    const x = minX + Math.random() * (maxX - minX);
+    let y;
+
+    if (startFromBottom) {
+      // 从屏幕底部下方生成 (100% height + 随机缓冲)
+      y = window.innerHeight + 50 + Math.random() * 150;
+    } else {
+      // 屏幕中间区域随机
+      y = window.innerHeight * 0.2 + Math.random() * (window.innerHeight * 0.6);
+    }
+
+    if (!checkCollision(x, y, wishesData)) {
+      return { x, y };
+    }
+  }
+  
+  // 如果实在找不到（屏幕太挤），就只能随机给一个了
+  return {
+    x: minX + Math.random() * (maxX - minX),
+    y: startFromBottom ? window.innerHeight + 50 : Math.random() * window.innerHeight
+  };
+};
+
+const deleteWish = async (id, element) => {
+  if (!confirm("确定要删除这条寄语吗？")) return;
+  
+  // 视觉移除
+  element.style.transition = "all 0.3s ease";
+  element.style.opacity = '0';
+  element.style.transform = 'scale(0.5)';
+  
+  // 逻辑移除
+  wishesData = wishesData.filter(w => w.id !== id);
+  setTimeout(() => {
+      if(element.parentNode) element.parentNode.removeChild(element);
+  }, 300);
+
+  try {
+    await fetch(`/api/delete/${id}`, { method: 'DELETE' });
+  } catch (err) { console.error(err); }
+};
+
+const addWishToScene = (data, isNew = false) => {
+  if (wishesData.some(w => w.id === data.id)) return;
+
+  const el = document.createElement("div");
+  el.className = "wish";
+  el.textContent = data.text;
+  
+  const closeBtn = document.createElement("span");
+  closeBtn.className = "close-btn";
+  closeBtn.textContent = "×";
+  closeBtn.onclick = (e) => { e.stopPropagation(); deleteWish(data.id, el); };
+  el.appendChild(closeBtn);
+
+  // --- 关键修改：位置计算 ---
+  // 新发送的：强制从中间底部出现
+  // 初始加载的：在屏幕中寻找空位
+  let pos;
+  if (isNew) {
+      pos = { x: window.innerWidth / 2 - 100, y: window.innerHeight - 100 };
+  } else {
+      pos = findFreePosition(false); // false 表示不在底部生成，而是在屏幕里随机
+  }
+
+  el.style.left = `${pos.x}px`;
+  el.style.top = `${pos.y}px`;
+  wishLayer.appendChild(el);
+
+  const wishObj = {
+    id: data.id,
+    element: el,
+    x: pos.x,
+    y: pos.y,
+    speed: CONFIG.baseSpeed + Math.random() * 0.4, 
+    phase: Math.random() * Math.PI * 2,
+    phaseSpeed: 0.02 + Math.random() * 0.02
+  };
+  wishesData.push(wishObj);
+
+  // 进场动画
+  requestAnimationFrame(() => {
+    el.style.opacity = "1";
+    if (isNew) {
+        el.style.transform = "scale(1.1)";
+        setTimeout(() => el.style.transform = "scale(1)", 300);
+        // 发送成功：屏幕中央绽放大烟花
+        createExplosion(window.innerWidth / 2, window.innerHeight * 0.3, 'big');
+    }
+  });
+
+  if (wishesData.length > CONFIG.maxWishes) {
+    const old = wishesData.shift(); 
+    if (old && old.element) {
+      old.element.style.opacity = '0';
+      setTimeout(() => old.element.remove(), 1000);
+    }
   }
 };
+
+function animateWishes() {
+  wishesData.forEach(w => {
+    // 移动
+    w.y -= w.speed;
+    w.phase += w.phaseSpeed;
+    const offsetX = Math.sin(w.phase) * CONFIG.floatAmp;
+    
+    // --- 关键修改：循环刷新逻辑 ---
+    // 当气泡完全飘出屏幕上方 (y < -150)
+    if (w.y < -150) {
+      // 重新寻找一个不重叠的底部位置
+      const newPos = findFreePosition(true); // true = 从底部生成
+      w.x = newPos.x;
+      w.y = newPos.y;
+      
+      // 可以顺便随机微调一下速度，让它看起来像个新气泡
+      w.speed = CONFIG.baseSpeed + Math.random() * 0.4;
+    }
+
+    w.element.style.transform = `translate3d(${offsetX}px, 0, 0)`; 
+    w.element.style.top = `${w.y}px`;
+    w.element.style.left = `${w.x}px`; // 实时更新 left 以确保位置重置生效
+  });
+  
+  requestAnimationFrame(animateWishes);
+}
+
+/* -----------------------------------------------------------
+   PART 3: 初始化与事件
+   ----------------------------------------------------------- */
 
 const fetchInit = async () => {
   try {
-    const response = await fetch(`/api/init?recent_limit=${RECENT_LIMIT}&random_limit=${RANDOM_LIMIT}`);
-    if (!response.ok) return;
-    const data = await response.json();
-    const list = [...(data.recent || []), ...(data.random || [])];
-    
-    // 错开一点时间生成，看起来自然
-    list.forEach((item, index) => {
-      setTimeout(() => addWishToSystem(item, false), index * 50);
-    });
-    
-  } catch (error) {
-    console.error(error);
-  }
+    const res = await fetch("/api/init?recent_limit=15&random_limit=15");
+    if (!res.ok) return;
+    const data = await res.json();
+    const all = [...(data.recent || []), ...(data.random || [])];
+    all.sort(() => Math.random() - 0.5);
+    all.forEach(w => addWishToScene(w, false));
+  } catch (e) { console.error(e); }
 };
 
 const sendWish = async () => {
   const text = input.value.trim();
-  if (!text) {
-    input.focus();
-    return;
-  }
+  if (!text) { input.focus(); return; }
 
   sendButton.classList.add("fly");
   
-  // 等待飞机起飞
-  await new Promise(r => setTimeout(r, 300));
-
   try {
-    const response = await fetch("/api/submit", {
+    const res = await fetch("/api/submit", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ text }),
     });
 
-    if (!response.ok) return;
-
-    const wish = await response.json();
-    addWishToSystem(wish, true); // true = 新愿望，有发射动画
-    
-    input.value = "";
-    input.focus();
-  } catch (error) {
-    console.error(error);
-  } finally {
-    setTimeout(() => sendButton.classList.remove("fly"), 600);
-  }
+    if (res.ok) {
+      const wish = await res.json();
+      addWishToScene(wish, true); 
+      input.value = "";
+      input.focus();
+    }
+  } catch (e) { console.error(e); } 
+  finally { setTimeout(() => sendButton.classList.remove("fly"), 700); }
 };
 
-const handleKey = (event) => {
-  if (event.key === "Enter") {
-    event.preventDefault();
-    sendWish();
-  }
-};
-
-const scheduleMeteor = () => {
-  const nextTime = 4000 + Math.random() * 6000;
-  setTimeout(() => {
-    meteor.classList.add("active");
-    setTimeout(() => meteor.classList.remove("active"), 1500);
-    scheduleMeteor();
-  }, nextTime);
-};
-
-// 交互与启动
+if (fireworkToggle) {
+    fireworkToggle.addEventListener('change', (e) => isFireworkActive = e.target.checked);
+}
 sendButton.addEventListener("click", sendWish);
-input.addEventListener("keydown", handleKey);
+input.addEventListener("keydown", (e) => e.key === "Enter" && sendWish());
+window.addEventListener("resize", resizeCanvas);
 
-// 启动物理循环
-updatePhysics();
+resizeCanvas();
+renderLoop();
+animateWishes();
 fetchInit();
-scheduleMeteor();
-input.focus();
