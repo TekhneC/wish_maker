@@ -224,12 +224,26 @@ const deleteWish = async (id, element) => {
   } catch (err) { console.error(err); }
 };
 
+// === 新增：游戏状态变量 ===
+let isGaming = false;
+let gameScore = 0;
+let caughtWishesText = []; // 存储捕获到的文字
+
 const addWishToScene = (data, isNew = false) => {
   if (wishesData.some(w => w.id === data.id)) return;
 
   const el = document.createElement("div");
   el.className = "wish";
   el.textContent = data.text;
+
+  // --- 修改 1: 添加游戏点击事件 ---
+  el.addEventListener('mousedown', (e) => {
+    if (isGaming) {
+        e.stopPropagation(); // 防止触发其他点击
+        handleCatchWish(data, el, e.clientX, e.clientY);
+        return;
+    }
+  });
   
   const closeBtn = document.createElement("span");
   closeBtn.className = "close-btn";
@@ -358,3 +372,157 @@ resizeCanvas();
 renderLoop();
 animateWishes();
 fetchInit();
+
+/* -----------------------------------------------------------
+   PART 4: 游戏模式逻辑 (新增)
+   ----------------------------------------------------------- */
+   const hudCenter = document.querySelector('.hud-center');
+   const timerSpan = document.querySelector('.timer');
+   const scoreSpan = document.querySelector('.score');
+   const startBtn = document.getElementById('start-game-btn');
+   const refreshBtn = document.getElementById('refresh-btn');
+   
+   // 捕获祝福的处理
+   function handleCatchWish(data, element, clientX, clientY) {
+       // 1. 加分
+       gameScore++;
+       scoreSpan.textContent = `✨ ${gameScore}`;
+       caughtWishesText.push(data.text);
+   
+       // 2. 视觉反馈：爆炸并消失
+       createExplosion(clientX, clientY, 'normal'); // 复用现有的烟花效果
+       
+       element.style.transform = "scale(1.5)";
+       element.style.opacity = "0";
+       
+       // 从数据中移除
+       wishesData = wishesData.filter(w => w.id !== data.id);
+       setTimeout(() => {
+           if(element.parentNode) element.parentNode.removeChild(element);
+       }, 200);
+   }
+   
+   // 刷新祝福池
+   async function refreshWishes() {
+       refreshBtn.style.transform = "rotate(360deg)";
+       
+       // 清空现有 DOM
+       wishesData.forEach(w => {
+           if(w.element && w.element.parentNode) w.element.parentNode.removeChild(w.element);
+       });
+       wishesData = [];
+       
+       // 重新获取
+       await fetchInit();
+       
+       setTimeout(() => refreshBtn.style.transform = "rotate(0deg)", 500);
+   }
+   
+   // 游戏主流程
+   function startGame() {
+       isGaming = true;
+       gameScore = 0;
+       caughtWishesText = [];
+       let timeLeft = 10;
+       
+       // UI 切换
+       document.body.classList.add('gaming');
+       startBtn.style.display = 'none';
+       refreshBtn.style.display = 'none';
+       hudCenter.style.display = 'flex';
+       scoreSpan.textContent = `✨ 0`;
+       timerSpan.textContent = `⏳ 10s`;
+   
+       // 倒计时
+       const timerInterval = setInterval(() => {
+           timeLeft--;
+           timerSpan.textContent = `⏳ ${timeLeft}s`;
+           
+           if (timeLeft <= 0) {
+               clearInterval(timerInterval);
+               endGame();
+           }
+       }, 1000);
+   }
+   
+   function endGame() {
+       isGaming = false;
+       document.body.classList.remove('gaming');
+       hudCenter.style.display = 'none';
+       startBtn.style.display = 'block';
+       refreshBtn.style.display = 'block';
+   
+       showResultModal();
+   }
+   
+   // 结果计算与展示
+   const modal = document.getElementById('result-modal');
+   const modalTitle = document.getElementById('modal-title');
+   const finalScore = document.getElementById('final-score');
+   const genWishText = document.getElementById('generated-wish-text');
+   const finalInput = document.getElementById('final-wish-input');
+   
+   function showResultModal() {
+    // 1. 设置分数
+    finalScore.textContent = gameScore;
+    
+    // 2. 设置称号
+    let title = "";
+    if (gameScore < 3) title = "🌸 佛系赏花人";
+    else if (gameScore < 8) title = "🌟 愿望捕手";
+    else if (gameScore < 15) title = "🚀 手速惊人";
+    else title = "👑 纳福锦鲤";
+    modalTitle.textContent = title;
+
+    // 3. 生成寄语逻辑 (示例)
+    let generatedText = "";
+    if (caughtWishesText.length > 0) {
+        const randomWish = caughtWishesText[Math.floor(Math.random() * caughtWishesText.length)];
+        // 为了排版好看，建议生成的句子不要太长，或者手动换行
+        const templates = [
+            `与${randomWish}\n不期而遇`,
+            `2026关键词\n${randomWish}`,
+            `保持热爱\n${randomWish}`,
+            `${randomWish}\n平安喜乐`
+        ];
+        generatedText = templates[Math.floor(Math.random() * templates.length)];
+    } else {
+        generatedText = "万事顺遂\n平安喜乐";
+    }
+    
+    // 4. 赋值并同步
+    genWishText.textContent = generatedText;
+    finalInput.value = generatedText.replace(/\n/g, " "); // 输入框里显示单行，方便编辑
+    
+    modal.classList.add('active');
+}
+
+// === 核心：输入框实时同步到海报 ===
+finalInput.addEventListener('input', (e) => {
+    // 这里做一个简单的处理：如果用户输入空格，我们在海报上视作换行，或者直接原样显示
+    // 简单起见，直接显示用户输入的文本
+    genWishText.textContent = e.target.value || " "; 
+});
+   
+   // 模态框按钮事件
+   document.getElementById('close-modal-btn').onclick = () => {
+       modal.classList.remove('active');
+       // 游戏结束后，最好补货一点，不然屏幕空了
+       if (wishesData.length < 5) refreshWishes();
+   };
+   
+   document.getElementById('save-result-btn').onclick = async () => {
+       const text = finalInput.value.trim();
+       if (text) {
+           // 调用原有的输入框和发送逻辑，或者直接 fetch
+           // 这里为了简单，直接模拟点击主界面的发送
+           input.value = text;
+           await sendWish(); // 复用 Part 3 的发送函数
+       }
+       modal.classList.remove('active');
+       alert("✨ 你的新年签已存入祝福池！");
+   };
+   
+   // 绑定新增按钮事件
+   startBtn.addEventListener('click', startGame);
+   refreshBtn.addEventListener('click', refreshWishes);
