@@ -18,6 +18,42 @@
     </div>
 
     <section class="wishes" id="wish-layer" aria-live="polite"></section>
+    
+    <div id="game-hud" class="game-hud">
+      <div class="hud-left">
+          <button id="refresh-btn" class="icon-btn" title="刷新祝福池">🔄</button>
+          <button id="start-game-btn" class="game-btn">🎮 开启挑战</button>
+      </div>
+      <div class="hud-center" style="display: none;">
+          <span class="timer">⏳ 10s</span>
+          <span class="score">✨ 0</span>
+      </div>
+  </div>
+  
+  <div id="result-modal" class="modal-overlay" aria-hidden="true">
+    <div class="modal-card">
+        
+        <div class="postcard" id="capture-area">
+            <div class="poster-header">
+                <div class="badge" id="modal-title">称号加载中</div>
+                <div class="score-display">捕获 <span id="final-score">0</span> 个祝福</div>
+            </div>
+
+            <div class="poster-footer">
+                <p class="wish-text-display" id="generated-wish-text">...</p>
+            </div>
+        </div>
+        
+        <div class="modal-controls">
+            <input type="text" id="final-wish-input" placeholder="自定义你的新年签..." maxlength="20" />
+            
+            <div class="btn-row">
+                <button id="save-result-btn" class="save-btn">存入祝福池</button>
+                <button id="close-modal-btn" class="close-btn">关闭</button>
+            </div>
+        </div>
+    </div>
+</div>
 
     <div class="input-bar">
       <input
